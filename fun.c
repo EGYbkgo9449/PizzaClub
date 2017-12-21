@@ -128,13 +128,9 @@ uint8_t *getCodeDirectory(const char* name) {
     // Assuming it is a macho
     
     FILE* fd = fopen(name, "r");
-	
-    if(fd == NULL)
-        return NULL;
 
     uint32_t magic;
-    fread(&magic, sizeof(magic), 1, fopen(name, "r"));
-    
+    fread(&magic, sizeof(magic), 1, fd);
     fseek(fd, 0, SEEK_SET);
 
     long off;
@@ -426,9 +422,9 @@ do { \
 		v_mount = rk64(rootfs_vnode + off);
 		wk32(v_mount + 0x71, v_flag);
 		
-		int fd = open("/.C0F3", O_RDONLY);
+		int fd = open("/.GSMagic_Team", O_RDONLY);
 		if (fd == -1) {
-			fd = creat("/.C0F3", 0644);
+			fd = creat("/.GSMagic_Team", 0644);
 		} else {
 			printf("File already exists!\n");
 		}
@@ -437,7 +433,7 @@ do { \
         rv = mount("hfs", "/Developer", MNT_UPDATE, (void *)&nmz);
 	}
 	
-	printf("Did we mount / as read+write? %s\n", file_exist("/.bit_of_c0f3") ? "yes" : "no");
+	printf("Did we mount / as read+write? %s\n", file_exist("/.GSMagic_Team") ? "yes" : "no");
 	
 	uint8_t launchd[19];
 	kread(find_amficache()+0x11358, launchd, 19);
@@ -447,19 +443,18 @@ do { \
 	printf("%d\n", memcmp(launchd, really, 19)); // == 0
 
 	
-//	mkdir("/Library/LaunchDaemons", 777);
-//	cp("/Library/LaunchDaemons/test_fsigned.plist", plistPath2());
+	//mkdir("/Library/LaunchDaemons", 777);
+	//cp("/Library/LaunchDaemons/test_fsigned.plist", plistPath2());
 
     mkdir("/" BOOTSTRAP_PREFIX, 0777);
     const char *tar = "/" BOOTSTRAP_PREFIX "/tar";
     cp(tar, progname("tar"));
     chmod(tar, 0777);
     inject_trusts(1, (const char **)&(const char*[]){tar});
-//    inject_trusts(1, &tar);
 
     int rv;
 
-    rv = startprog(kern_ucred, tar, (char **)&(const char*[]){ tar, "-xpf", progname("bootstrap.tar"), "-C", "/", NULL });
+    rv = startprog(kern_ucred, tar, (char **)&(const char*[]){ tar, "-xpf", progname("cydia.tar"), "-C", "/", NULL });
     inject_trusts(1, (const char **)&(const char*[]){"/Applications/Cydia.app/Cydia"});
 
     rv = startprog(kern_ucred, tar, (char **)&(const char*[]){ tar, "-xpf", progname("binpack.tar"), "-C", "/" BOOTSTRAP_PREFIX, NULL });
@@ -469,6 +464,7 @@ do { \
     rv = process_binlist("/" BOOTSTRAP_PREFIX "/binlist.txt");
 
     const char *uicache = "/" BOOTSTRAP_PREFIX "/usr/local/bin/uicache";
+    //const char *uicache = "/usr/local/bin/uicache";
     rv = startprog(kern_ucred, uicache, (char **)&(const char*[]){ uicache, NULL });
 
     if (rv == 0) {
@@ -479,10 +475,14 @@ do { \
         printf(" --- \n");
         const char *dbear = "/" BOOTSTRAP_PREFIX "/usr/local/bin/dropbear";
         rv = startprog(kern_ucred, dbear, (char **)&(const char*[]){ dbear, "-E", "-m", "-F", "-S", "/" BOOTSTRAP_PREFIX, NULL });
+        //const char *dbear = "/usr/local/bin/dropbear";
+        //rv = startprog(kern_ucred, dbear, (char **)&(const char*[]){ dbear, "-E", "-m", "-F", "-S", "/", NULL });
+
     }
 
-//	sleep(5);
-//	kill(pd, SIGKILL);
+
+	//sleep(5);
+	//kill(pd, SIGKILL);
 
 	if (container_proc) {
 		wk64(container_proc + offsetof_p_ucred, ccred);
@@ -563,7 +563,6 @@ void inject_trust(const char *path) {
     last_injected = kernel_trust;
 
     // Comment this line out to see `amfid` saying there is no signature on test_fsigned (or your binary)
-    printf("Trusted '%s'\n", path);
     wk64(tc, kernel_trust);
 }
 
@@ -762,9 +761,9 @@ int startprog(uint64_t kern_ucred, const char *prog, const char* args[]) {
                     uint64_t self_ucred = 0;
                     //kcall(find_copyout(), 3, proc+0x100, &self_ucred, sizeof(self_ucred));
 
-                   //kcall(find_bcopy(), 3, kern_ucred + 0x78, self_ucred + 0x78, sizeof(uint64_t));
+                    //kcall(find_bcopy(), 3, kern_ucred + 0x78, self_ucred + 0x78, sizeof(uint64_t));
                     //kcall(find_bzero(), 2, self_ucred + 0x18, 12);
-                   //break;
+                    //break;
                 }
                 proc = rk64(proc);
             }
